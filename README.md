@@ -1,8 +1,8 @@
 # Studio Assistant
 
 A responsive, real-time chat interface built with Next.js App Router, TypeScript,
-Tailwind CSS, and the Vercel AI SDK. Messages are streamed from OpenAI's
-`gpt-4o-mini` model and rendered incrementally as each text chunk arrives.
+Tailwind CSS, and the Vercel AI SDK. Messages are streamed from Groq Cloud's
+`qwen/qwen3.6-27b` model and rendered incrementally as each text chunk arrives.
 
 ## Run locally
 
@@ -12,7 +12,7 @@ Tailwind CSS, and the Vercel AI SDK. Messages are streamed from OpenAI's
    npm install
    ```
 
-2. Copy the environment template and add an OpenAI API key:
+2. Copy the environment template and add a Groq API key:
 
    ```bash
    cp .env.example .env.local
@@ -26,7 +26,7 @@ Tailwind CSS, and the Vercel AI SDK. Messages are streamed from OpenAI's
 
 4. Open [http://localhost:3000](http://localhost:3000).
 
-Never expose `OPENAI_API_KEY` in browser code or commit `.env.local`; the key is
+Never expose `GROQ_API_KEY` in browser code or commit `.env.local`; the key is
 read only by the server-side API route.
 
 ## How streaming works
@@ -38,7 +38,7 @@ page.tsx / useChat
 app/api/chat/route.ts
        │  convertToModelMessages → streamText
        ▼
-OpenAI gpt-4o-mini
+Groq Cloud / qwen/qwen3.6-27b
        │  incremental stream parts
        ▼
 UI message SSE stream → useChat → live message rendering
@@ -59,7 +59,7 @@ and shows retry/error states.
 Change the model in `app/api/chat/route.ts`:
 
 ```ts
-model: openai("gpt-4o-mini")
+model: groq("qwen/qwen3.6-27b")
 ```
 
 To use another provider, install its AI SDK package, import its provider

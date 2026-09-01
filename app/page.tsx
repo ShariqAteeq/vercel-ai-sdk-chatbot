@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { MarkdownMessage } from "./components/markdown-message";
 
 const suggestions = [
   "Explain streaming responses simply",
@@ -71,6 +72,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const submissionLockRef = useRef(false);
 
   const isBusy = status === "submitted" || status === "streaming";
   const lastMessageText =
@@ -89,7 +91,14 @@ export default function Home() {
 
   useEffect(() => {
     if (status === "ready") {
+      submissionLockRef.current = false;
       inputRef.current?.focus();
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (status === "error") {
+      submissionLockRef.current = false;
     }
   }, [status]);
 
@@ -103,11 +112,14 @@ export default function Home() {
 
   function submitMessage(text: string) {
     const content = text.trim();
-    if (!content || isBusy) return;
+    if (!content || isBusy || submissionLockRef.current) return;
 
+    submissionLockRef.current = true;
     setInput("");
     requestAnimationFrame(() => inputRef.current?.focus());
-    void sendMessage({ text: content }).catch(() => undefined);
+    void sendMessage({ text: content }).catch(() => {
+      submissionLockRef.current = false;
+    });
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -116,7 +128,11 @@ export default function Home() {
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey &&
+      !event.nativeEvent.isComposing
+    ) {
       event.preventDefault();
       submitMessage(input);
     }
@@ -156,7 +172,7 @@ export default function Home() {
 
           <div className="hidden items-center gap-2 rounded-full border border-[#e5e5df] bg-[#fafaf8] px-3 py-1.5 text-xs font-medium text-[#6d6d66] sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-[#82ad8e]" />
-            GPT-4o mini
+            Groq · Qwen 3.6
           </div>
         </header>
 
@@ -196,12 +212,15 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-7">
+              <div className="flex flex-col gap-8">
                 {messages.map((message, messageIndex) => {
                   const isUser = message.role === "user";
                   const textParts = message.parts.filter(
                     (part) => part.type === "text",
                   );
+                  const messageText = textParts
+                    .map((part) => part.text)
+                    .join("");
                   const isLastAssistant =
                     !isUser && messageIndex === messages.length - 1;
 
@@ -219,25 +238,32 @@ export default function Home() {
                       )}
 
                       <div
-                        className={`max-w-[86%] text-[0.94rem] leading-7 sm:max-w-[78%] ${
+                        className={`max-w-[88%] text-[0.94rem] leading-7 sm:max-w-[80%] ${
                           isUser
                             ? "rounded-[1.25rem] rounded-br-md bg-[#233c30] px-4 py-2.5 text-[#f7faf8] shadow-sm"
-                            : "pt-0.5 text-[#373733]"
+                            : "rounded-[1.25rem] rounded-tl-md border border-[#dfe7e1] bg-[#f7faf8] px-4 py-3.5 text-[#303c34] shadow-[0_6px_20px_rgba(35,60,48,0.06)]"
                         }`}
                       >
-                        {textParts.map((part, partIndex) => (
-                          <p
-                            key={`${message.id}-${partIndex}`}
-                            className="whitespace-pre-wrap break-words"
-                          >
-                            {part.text}
-                            {isLastAssistant &&
-                              status === "streaming" &&
-                              partIndex === textParts.length - 1 && (
-                                <span className="ml-1 inline-block h-4 w-0.5 animate-pulse rounded-full bg-[#4e795d] align-[-2px]" />
-                              )}
+                        {!isUser && (
+                          <div className="mb-2.5 flex items-center justify-between gap-4 border-b border-[#e3eae5] pb-2 text-[0.68rem] font-semibold uppercase tracking-[0.13em] text-[#66806e]">
+                            <span>Assistant response</span>
+                            {isLastAssistant && status === "streaming" && (
+                              <span className="flex items-center gap-1.5 normal-case tracking-normal text-[#779080]">
+                                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#58a876]" />
+                                Streaming
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {isUser ? (
+                          <p className="whitespace-pre-wrap break-words">
+                            {messageText}
                           </p>
-                        ))}
+                        ) : (
+                          <div className="break-words">
+                            <MarkdownMessage>{messageText}</MarkdownMessage>
+                          </div>
+                        )}
                       </div>
                     </article>
                   );
@@ -248,11 +274,19 @@ export default function Home() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#e8f1eb] text-[#356249]">
                       <SparkIcon className="h-4 w-4" />
                     </div>
-                    <span className="flex gap-1" aria-label="Assistant is thinking">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#789281] [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#789281] [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#789281]" />
-                    </span>
+                    <div className="flex items-center gap-3 rounded-2xl rounded-tl-md border border-[#dfe7e1] bg-[#f7faf8] px-4 py-3 shadow-[0_6px_20px_rgba(35,60,48,0.05)]">
+                      <span
+                        className="flex gap-1"
+                        aria-label="Assistant is thinking"
+                      >
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#789281] [animation-delay:-0.3s]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#789281] [animation-delay:-0.15s]" />
+                        <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#789281]" />
+                      </span>
+                      <span className="font-medium text-[#617568]">
+                        Thinking… preparing a response
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -266,7 +300,7 @@ export default function Home() {
                 <div>
                   <p className="font-medium">The response was interrupted.</p>
                   <p className="mt-0.5 text-xs leading-5 text-[#a36c5b]">
-                    Check your API key and connection, then try again.
+                    Check your Groq API key and connection, then try again.
                   </p>
                 </div>
                 <button

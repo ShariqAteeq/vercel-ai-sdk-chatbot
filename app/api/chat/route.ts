@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { groq, type GroqLanguageModelOptions } from "@ai-sdk/groq";
 import {
   convertToModelMessages,
   createUIMessageStreamResponse,
@@ -14,9 +14,9 @@ type ChatRequest = {
 };
 
 export async function POST(request: Request) {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.GROQ_API_KEY) {
     return Response.json(
-      { error: "OPENAI_API_KEY is not configured." },
+      { error: "GROQ_API_KEY is not configured." },
       { status: 503 },
     );
   }
@@ -37,10 +37,15 @@ export async function POST(request: Request) {
   }
 
   const result = streamText({
-    model: openai("gpt-4o-mini"),
+    model: groq("qwen/qwen3.6-27b"),
     system:
-      "You are a thoughtful, concise assistant. Give clear, practical answers and use a warm, natural tone.",
+      "You are a thoughtful, concise assistant. Give clear, practical answers in a warm, natural tone. Return only the user-facing answer; never include private analysis, chain-of-thought, or <think> tags.",
     messages: await convertToModelMessages(body.messages),
+    providerOptions: {
+      groq: {
+        reasoningFormat: "hidden",
+      } satisfies GroqLanguageModelOptions,
+    },
   });
 
   const stream = toUIMessageStream({
