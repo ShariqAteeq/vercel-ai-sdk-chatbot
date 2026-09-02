@@ -1,67 +1,59 @@
-# Studio Assistant
+# Studio Assistant frontend
 
-A responsive, real-time chat interface built with Next.js App Router, TypeScript,
-Tailwind CSS, and the Vercel AI SDK. Messages are streamed from Groq Cloud's
-`qwen/qwen3.6-27b` model and rendered incrementally as each text chunk arrives.
+A responsive streaming chat interface built with Next.js App Router, TypeScript,
+Tailwind CSS, and the Vercel AI SDK React package. The browser now talks directly
+to the separate NestJS service in `../ai-chat-api`; OpenAI is never called from
+the browser or from a Next.js route.
 
 ## Run locally
 
-1. Install dependencies:
+1. Start the NestJS backend first. Follow
+   [`../ai-chat-api/README.md`](../ai-chat-api/README.md) and leave it running on
+   `http://localhost:3001`.
 
-   ```bash
+2. Install frontend dependencies:
+
+   ```powershell
    npm install
    ```
 
-2. Copy the environment template and add a Groq API key:
+3. Copy `.env.example` to `.env.local`. The default is:
 
-   ```bash
-   cp .env.example .env.local
+   ```dotenv
+   NEXT_PUBLIC_CHAT_API_URL=http://localhost:3001/chat
    ```
 
-3. Start the development server:
+4. Start Next.js:
 
-   ```bash
+   ```powershell
    npm run dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000).
+5. Open [http://localhost:3000](http://localhost:3000).
 
-Never expose `GROQ_API_KEY` in browser code or commit `.env.local`; the key is
-read only by the server-side API route.
+`NEXT_PUBLIC_CHAT_API_URL` is intentionally visible in the browser. The secret
+`OPENAI_API_KEY` belongs only in `ai-chat-api/.env`, never in this project.
 
 ## How streaming works
 
 ```text
 page.tsx / useChat
-       │  POST UIMessage[]
-       ▼
-app/api/chat/route.ts
-       │  convertToModelMessages → streamText
-       ▼
-Groq Cloud / qwen/qwen3.6-27b
-       │  incremental stream parts
-       ▼
-UI message SSE stream → useChat → live message rendering
+       |  POST { id, messages, trigger, messageId }
+       v
+NestJS POST http://localhost:3001/chat
+       |  OpenAI Chat Completions with stream: true
+       v
+OpenAI / gpt-4o-mini
+       |  provider chunks -> UI-message SSE events
+       v
+DefaultChatTransport -> useChat -> live message rendering
 ```
 
-`useChat` owns the client conversation state and lifecycle (`submitted`,
-`streaming`, `ready`, or `error`). `DefaultChatTransport` posts the current UI
-messages to `/api/chat`, where the route converts them to model messages and
-starts `streamText`. The response is returned as an SSE-compatible UI message
-stream, so each text delta updates the final assistant message immediately.
+`useChat` owns the browser conversation state and lifecycle (`submitted`,
+`streaming`, `ready`, or `error`). `DefaultChatTransport` posts UI messages to
+NestJS and parses the returned AI SDK UI-message stream. Each `text-delta` event
+updates the assistant card immediately.
 
-The interface also keeps focus in the composer, auto-grows the text area,
-auto-scrolls during streaming, supports Enter-to-send, exposes a stop control,
+The interface keeps focus in the composer, auto-grows the text area,
+auto-scrolls while streaming, supports Enter-to-send, exposes a stop control,
 and shows retry/error states.
-
-## Switching models or providers
-
-Change the model in `app/api/chat/route.ts`:
-
-```ts
-model: groq("qwen/qwen3.6-27b")
-```
-
-To use another provider, install its AI SDK package, import its provider
-function, and replace only the `model` value passed to `streamText`; the route's
-streaming code and the client UI can remain unchanged.

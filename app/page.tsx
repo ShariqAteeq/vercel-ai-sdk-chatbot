@@ -18,6 +18,9 @@ const suggestions = [
   "Plan a focused work session",
 ];
 
+const chatApiUrl =
+  process.env.NEXT_PUBLIC_CHAT_API_URL?.trim() || "http://localhost:3001/chat";
+
 function SparkIcon({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg
@@ -58,7 +61,7 @@ function StopIcon() {
 
 export default function Home() {
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat" }),
+    () => new DefaultChatTransport({ api: chatApiUrl }),
     [],
   );
   const {
@@ -172,7 +175,7 @@ export default function Home() {
 
           <div className="hidden items-center gap-2 rounded-full border border-[#e5e5df] bg-[#fafaf8] px-3 py-1.5 text-xs font-medium text-[#6d6d66] sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-[#82ad8e]" />
-            Groq · Qwen 3.6
+            OpenAI · GPT-4o mini
           </div>
         </header>
 
@@ -300,7 +303,8 @@ export default function Home() {
                 <div>
                   <p className="font-medium">The response was interrupted.</p>
                   <p className="mt-0.5 text-xs leading-5 text-[#a36c5b]">
-                    Check your Groq API key and connection, then try again.
+                    Check that the NestJS API is running and its OpenAI key is
+                    configured, then try again.
                   </p>
                 </div>
                 <button
