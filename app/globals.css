@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f5f2;
-  --foreground: #20201f;
+  --background: #eeeee8;
+  --foreground: #1d2925;
 }
 
 @theme inline {
@@ -25,7 +25,7 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 button,
@@ -34,7 +34,7 @@ textarea {
 }
 
 .chat-scrollbar {
-  scrollbar-color: #d6d8d3 transparent;
+  scrollbar-color: #d1d6d1 transparent;
   scrollbar-width: thin;
 }
 
@@ -50,10 +50,28 @@ textarea {
   border: 3px solid transparent;
   border-radius: 999px;
   background-clip: padding-box;
-  background-color: #d6d8d3;
+  background-color: #d1d6d1;
 }
 
 ::selection {
-  background: #cfe2d4;
-  color: #173324;
+  background: #dfff62;
+  color: #173c32;
+}
+
+.app-grid {
+  background-image:
+    linear-gradient(rgba(26, 54, 45, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 54, 45, 0.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Studio Assistant",
-  description: "A real-time streaming chat built with Next.js and the Vercel AI SDK.",
+  title: "Giving Assistant — Tool-calling chat",
+  description:
+    "A production-style AI agent that calls a donation totals backend and streams grounded answers.",
 };
 
 export default function RootLayout({
