@@ -15,6 +15,9 @@ import {
   useState,
 } from "react";
 import { MarkdownMessage } from "./components/markdown-message";
+import { AdminAssistantSidebar } from "@/components/admin-assistant-sidebar";
+import { EcommerceCatalog } from "@/components/ecommerce-catalog";
+import { ShoppingBag, Sparkles, HeartHandshake } from "lucide-react";
 
 const suggestions = [
   {
@@ -37,7 +40,9 @@ const chatApiUrl =
 function BrandMark({ small = false }: { small?: boolean }) {
   return (
     <div
-      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-[0.9rem] bg-[#dfff62] text-[#152c26] ${small ? "h-8 w-8" : "h-10 w-10"}`}
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-[0.9rem] bg-[#dfff62] text-[#152c26] ${
+        small ? "h-8 w-8" : "h-10 w-10"
+      }`}
     >
       <svg
         aria-hidden="true"
@@ -211,6 +216,12 @@ function DonationToolCard({ part }: { part: DynamicToolUIPart }) {
 }
 
 export default function Home() {
+  const [currentView, setCurrentView] = useState<"ecommerce" | "donations">("ecommerce");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // ---------------------------------------------------------------------------
+  // GIVING ASSISTANT (PREVIOUS DONATIONS DEMO VIEW)
+  // ---------------------------------------------------------------------------
   const transport = useMemo(
     () => new DefaultChatTransport({ api: chatApiUrl }),
     [],
@@ -295,216 +306,261 @@ export default function Home() {
   }
 
   return (
-    <main className="app-grid min-h-dvh bg-[#eeeee8] p-2.5 text-[#1d2925] sm:p-4 lg:h-dvh lg:overflow-hidden">
-      <section className="mx-auto grid min-h-[calc(100dvh-1.25rem)] w-full max-w-[1440px] overflow-hidden rounded-[1.5rem] border border-black/[0.08] bg-[#fbfbf7] shadow-[0_24px_80px_rgba(28,43,37,0.12)] lg:h-[calc(100dvh-2rem)] lg:min-h-[42rem] lg:grid-cols-[292px_minmax(0,1fr)]">
-        <aside className="relative hidden overflow-hidden bg-[#173c32] px-6 py-6 text-white lg:flex lg:flex-col">
-          <div className="pointer-events-none absolute -right-24 top-36 h-56 w-56 rounded-full border-[44px] border-[#dfff62]/[0.07]" />
-          <div className="relative flex items-center gap-3">
-            <BrandMark />
+    <div className="min-h-screen bg-[#f7f8f6] text-[#1d2925]">
+      {/* GLOBAL TOP NAVIGATION WITH PROTOTYPE SWITCHER */}
+      <header className="sticky top-0 z-30 border-b border-[#e1e5e0] bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#173c32] text-white shadow-xs">
+              <ShoppingBag className="h-4 w-4 text-[#dfff62]" />
+            </div>
             <div>
-              <p className="text-[0.95rem] font-semibold tracking-[-0.01em]">CommonGood</p>
-              <p className="mt-0.5 text-[0.66rem] uppercase tracking-[0.16em] text-[#9fb6ae]">Giving intelligence</p>
+              <span className="text-sm font-bold text-[#1f312b]">Aura Prototype</span>
+              <span className="ml-2 hidden rounded-md bg-[#edf2ee] px-2 py-0.5 text-[10px] font-semibold text-[#546b60] sm:inline-block">
+                Postgres + OpenAI
+              </span>
             </div>
           </div>
 
-          <div className="relative mt-12">
-            <span className="rounded-full border border-[#dfff62]/30 bg-[#dfff62]/10 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.13em] text-[#dfff62]">Agent workflow</span>
-            <h1 className="mt-4 text-[1.72rem] font-semibold leading-[1.12] tracking-[-0.045em]">Ask your data.<br />Get the answer.</h1>
-            <p className="mt-3 text-[0.78rem] leading-5 text-[#abc0b9]">The model decides when it needs live data, calls your backend, then explains the result.</p>
+          {/* MODE SELECTOR */}
+          <div className="flex items-center gap-1 rounded-xl bg-[#eef1ed] p-1 text-xs font-semibold">
+            <button
+              onClick={() => setCurrentView("ecommerce")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
+                currentView === "ecommerce"
+                  ? "bg-white text-[#173c32] shadow-xs"
+                  : "text-[#62756d] hover:text-[#173c32]"
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-[#173c32]" />
+              <span>E-Commerce & Roco</span>
+            </button>
+            <button
+              onClick={() => setCurrentView("donations")}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
+                currentView === "donations"
+                  ? "bg-white text-[#173c32] shadow-xs"
+                  : "text-[#62756d] hover:text-[#173c32]"
+              }`}
+            >
+              <HeartHandshake className="h-3.5 w-3.5 text-[#173c32]" />
+              <span className="hidden sm:inline">Giving Assistant</span>
+              <span className="sm:hidden">Donations</span>
+            </button>
           </div>
+        </div>
+      </header>
 
-          <ol className="relative mt-9 space-y-1">
-            {[
-              ["01", "Question received"],
-              ["02", "Tool selected by model"],
-              ["03", "Backend API called"],
-              ["04", "Grounded answer streamed"],
-            ].map(([number, label], index) => (
-              <li className="group flex items-center gap-3" key={number}>
-                <div className="flex flex-col items-center">
-                  <span className={`grid h-7 w-7 place-items-center rounded-full border text-[0.58rem] font-bold ${index === 2 ? "border-[#dfff62] bg-[#dfff62] text-[#173c32]" : "border-white/20 text-[#94aaa2]"}`}>{number}</span>
-                  {index < 3 && <span className="h-5 w-px bg-white/12" />}
+      {/* VIEW 1: E-COMMERCE STORE WITH ROCO SIDEBAR (PRIMARY OBJECTIVE) */}
+      {currentView === "ecommerce" ? (
+        <main className="pb-16">
+          <EcommerceCatalog
+            onOpenAssistant={() => {
+              // Trigger click on floating button
+              const btn = document.querySelector('button[aria-label="Open Roco AI Assistant"]') as HTMLButtonElement;
+              btn?.click();
+            }}
+            refreshTrigger={refreshTrigger}
+          />
+          {/* PERSISTENT ROCO SIDEBAR COPILOT */}
+          <AdminAssistantSidebar onDataMutated={() => setRefreshTrigger((t) => t + 1)} />
+        </main>
+      ) : (
+        /* VIEW 2: ORIGINAL GIVING ASSISTANT */
+        <main className="app-grid p-2.5 text-[#1d2925] sm:p-4 lg:h-[calc(100vh-4rem)] lg:overflow-hidden">
+          <section className="mx-auto grid h-full w-full max-w-[1440px] overflow-hidden rounded-[1.5rem] border border-black/[0.08] bg-[#fbfbf7] shadow-[0_24px_80px_rgba(28,43,37,0.12)] lg:grid-cols-[292px_minmax(0,1fr)]">
+            <aside className="relative hidden overflow-hidden bg-[#173c32] px-6 py-6 text-white lg:flex lg:flex-col">
+              <div className="pointer-events-none absolute -right-24 top-36 h-56 w-56 rounded-full border-[44px] border-[#dfff62]/[0.07]" />
+              <div className="relative flex items-center gap-3">
+                <BrandMark />
+                <div>
+                  <p className="text-[0.95rem] font-semibold tracking-[-0.01em]">CommonGood</p>
+                  <p className="mt-0.5 text-[0.66rem] uppercase tracking-[0.16em] text-[#9fb6ae]">Giving intelligence</p>
                 </div>
-                <span className={`-mt-5 text-[0.72rem] ${index === 2 ? "font-semibold text-white" : "text-[#a8bbb4]"}`}>{label}</span>
-              </li>
-            ))}
-          </ol>
+              </div>
 
-          <div className="relative mt-auto rounded-[1.1rem] border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-[#91aaa1]">Available tool</span>
-              <span className="flex items-center gap-1.5 text-[0.62rem] text-[#dfff62]"><span className="h-1.5 w-1.5 rounded-full bg-[#dfff62]" />Ready</span>
-            </div>
-            <p className="mt-3 font-mono text-[0.68rem] text-white">get_donation_totals</p>
-            <p className="mt-1.5 break-all font-mono text-[0.58rem] leading-4 text-[#8fa79f]">GET /api/donations/totals</p>
-          </div>
-        </aside>
-
-        <div className="flex min-h-0 flex-col">
-          <header className="flex h-[4.7rem] shrink-0 items-center justify-between border-b border-[#e5e6e0] px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              <div className="lg:hidden"><BrandMark small /></div>
-              <div>
-                <p className="text-sm font-semibold tracking-[-0.015em] text-[#1f312b]">Giving Assistant</p>
-                <p className="mt-0.5 flex items-center gap-1.5 text-[0.66rem] text-[#87918c]">
-                  <span className={`h-1.5 w-1.5 rounded-full ${status === "error" ? "bg-[#d66d55]" : "bg-[#4da66b]"}`} />
-                  {status === "submitted" ? "Planning" : status === "streaming" ? "Working" : status === "error" ? "Connection issue" : "Connected to donation API"}
+              <div className="relative mt-12">
+                <span className="rounded-full border border-[#dfff62]/30 bg-[#dfff62]/10 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.13em] text-[#dfff62]">
+                  Agent workflow
+                </span>
+                <h1 className="mt-4 text-[1.72rem] font-semibold leading-[1.12] tracking-[-0.045em]">
+                  Ask your data.<br />Get the answer.
+                </h1>
+                <p className="mt-3 text-[0.78rem] leading-5 text-[#abc0b9]">
+                  The model decides when it needs live data, calls your backend, then explains the result.
                 </p>
               </div>
-            </div>
-            <button
-              className="flex items-center gap-2 rounded-full border border-[#dfe2dc] bg-white px-3 py-2 text-[0.7rem] font-semibold text-[#53605b] shadow-sm transition hover:border-[#cbd1ca] hover:text-[#20352e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f50] disabled:opacity-50"
-              disabled={messages.length === 0 && !isBusy}
-              onClick={startNewChat}
-              type="button"
-            >
-              <span className="h-3.5 w-3.5"><PlusIcon /></span>
-              New chat
-            </button>
-          </header>
 
-          <div className="chat-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <div className="mx-auto flex min-h-full w-full max-w-[850px] flex-col px-4 py-7 sm:px-8 sm:py-10">
-              {messages.length === 0 ? (
-                <div className="my-auto py-4 sm:py-8">
-                  <div className="max-w-2xl">
-                    <p className="flex items-center gap-2 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#587165]">
-                      <span className="h-px w-6 bg-[#759084]" />
-                      Ask your donation ledger
-                    </p>
-                    <h2 className="mt-5 max-w-[660px] text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.055em] text-[#19362d] sm:text-[3.45rem]">
-                      Fundraising answers,
-                      <span className="block text-[#779166]">without the digging.</span>
-                    </h2>
-                    <p className="mt-5 max-w-xl text-[0.88rem] leading-6 text-[#718079] sm:text-[0.94rem]">
-                      Ask in plain English. The agent will call your backend when it needs exact figures, then turn the response into a clear answer.
-                    </p>
-                  </div>
-
-                  <div className="mt-9 grid gap-2.5 sm:grid-cols-3">
-                    {suggestions.map((suggestion, index) => (
-                      <button
-                        className="group flex min-h-[7.25rem] flex-col justify-between rounded-[1.05rem] border border-[#dfe2dc] bg-white p-4 text-left shadow-[0_5px_20px_rgba(32,52,45,0.045)] transition hover:-translate-y-0.5 hover:border-[#bac8bc] hover:shadow-[0_10px_28px_rgba(32,52,45,0.09)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f50] disabled:pointer-events-none disabled:opacity-50"
-                        disabled={isBusy}
-                        key={suggestion.label}
-                        onClick={() => submitMessage(suggestion.prompt)}
-                        type="button"
+              <ol className="relative mt-9 space-y-1">
+                {[
+                  ["01", "Question received"],
+                  ["02", "Tool selected by model"],
+                  ["03", "Backend API called"],
+                  ["04", "Grounded answer streamed"],
+                ].map(([number, label], index) => (
+                  <li className="group flex items-center gap-3" key={number}>
+                    <div className="flex flex-col items-center">
+                      <span
+                        className={`grid h-7 w-7 place-items-center rounded-full border text-[0.58rem] font-bold ${
+                          index === 2 ? "border-[#dfff62] bg-[#dfff62] text-[#173c32]" : "border-white/20 text-[#94aaa2]"
+                        }`}
                       >
-                        <div className="flex w-full items-center justify-between">
-                          <span className="text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[#8a958f]">0{index + 1}</span>
-                          <span className="grid h-6 w-6 place-items-center rounded-full bg-[#f0f2ed] text-[#557064] transition group-hover:bg-[#dfff62] group-hover:text-[#173c32]"><span className="h-3 w-3"><ArrowIcon /></span></span>
-                        </div>
-                        <span className="mt-4 text-[0.76rem] font-medium leading-5 text-[#354840]">{suggestion.prompt}</span>
-                      </button>
-                    ))}
-                  </div>
+                        {number}
+                      </span>
+                      {index < 3 && <span className="h-5 w-px bg-white/12" />}
+                    </div>
+                    <span className={`-mt-5 text-[0.72rem] ${index === 2 ? "font-semibold text-white" : "text-[#a8bbb4]"}`}>
+                      {label}
+                    </span>
+                  </li>
+                ))}
+              </ol>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.64rem] text-[#929a96]">
-                    <span><b className="mr-1 text-[#4d6259]">1</b> server tool</span>
-                    <span><b className="mr-1 text-[#4d6259]">3</b> campaigns</span>
-                    <span><b className="mr-1 text-[#4d6259]">5</b> reporting periods</span>
-                    <span className="rounded-full bg-[#edf0e9] px-2 py-1 font-semibold text-[#64746d]">Simulated ledger data</span>
+              <div className="relative mt-auto rounded-[1.1rem] border border-white/10 bg-white/[0.06] p-4 backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-[#91aaa1]">Available tool</span>
+                  <span className="flex items-center gap-1.5 text-[0.62rem] text-[#dfff62]"><span className="h-1.5 w-1.5 rounded-full bg-[#dfff62]" />Ready</span>
+                </div>
+                <p className="mt-3 font-mono text-[0.68rem] text-white">get_donation_totals</p>
+                <p className="mt-1.5 break-all font-mono text-[0.58rem] leading-4 text-[#8fa79f]">GET /api/donations/totals</p>
+              </div>
+            </aside>
+
+            <div className="flex min-h-0 flex-col">
+              <header className="flex h-[4.7rem] shrink-0 items-center justify-between border-b border-[#e5e6e0] px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center gap-3">
+                  <div className="lg:hidden"><BrandMark small /></div>
+                  <div>
+                    <p className="text-sm font-semibold tracking-[-0.015em] text-[#1f312b]">Giving Assistant</p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-[0.66rem] text-[#87918c]">
+                      <span className={`h-1.5 w-1.5 rounded-full ${status === "error" ? "bg-[#d66d55]" : "bg-[#4da66b]"}`} />
+                      {status === "submitted" ? "Planning" : status === "streaming" ? "Working" : status === "error" ? "Connection issue" : "Connected to donation API"}
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col gap-8">
-                  {messages.map((message, messageIndex) => {
-                    const isUser = message.role === "user";
-                    const isLastAssistant = !isUser && messageIndex === messages.length - 1;
+                <button
+                  className="flex items-center gap-2 rounded-full border border-[#dfe2dc] bg-white px-3 py-2 text-[0.7rem] font-semibold text-[#53605b] shadow-sm transition hover:border-[#cbd1ca] hover:text-[#20352e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f50] disabled:opacity-50"
+                  disabled={messages.length === 0 && !isBusy}
+                  onClick={startNewChat}
+                  type="button"
+                >
+                  <span className="h-3.5 w-3.5"><PlusIcon /></span>
+                  New chat
+                </button>
+              </header>
 
-                    return (
-                      <article className={`flex gap-3.5 ${isUser ? "justify-end" : "justify-start"}`} key={message.id}>
-                        {!isUser && (
-                          <div className="mt-0.5"><BrandMark small /></div>
-                        )}
-                        <div className={isUser ? "max-w-[85%] rounded-[1.15rem] rounded-br-[0.35rem] bg-[#173c32] px-4 py-3 text-[0.88rem] leading-6 text-white shadow-sm sm:max-w-[72%]" : "min-w-0 max-w-[92%] flex-1 sm:max-w-[86%]"}>
-                          {!isUser && (
-                            <div className="mb-2 flex items-center gap-2 text-[0.64rem] font-bold uppercase tracking-[0.11em] text-[#73837b]">
-                              Giving Assistant
-                              {isLastAssistant && status === "streaming" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#4da66b]" />}
-                            </div>
-                          )}
-                          {message.parts.map((part, partIndex) => {
-                            if (part.type === "text") {
-                              if (!part.text) return null;
-                              return isUser ? (
-                                <p className="whitespace-pre-wrap break-words" key={partIndex}>{part.text}</p>
-                              ) : (
-                                <div className="break-words text-[0.9rem] leading-7 text-[#35443e]" key={partIndex}>
-                                  <MarkdownMessage>{part.text}</MarkdownMessage>
-                                </div>
-                              );
-                            }
-
-                            if (isDynamicToolUIPart(part)) {
-                              return <DonationToolCard key={part.toolCallId} part={part} />;
-                            }
-
-                            return null;
-                          })}
-                        </div>
-                      </article>
-                    );
-                  })}
-
-                  {status === "submitted" && (
-                    <div className="flex items-center gap-3.5 text-sm text-[#75827c]">
-                      <BrandMark small />
-                      <div className="flex items-center gap-3 rounded-xl border border-[#e1e4df] bg-white px-3.5 py-2.5 shadow-sm">
-                        <span className="flex gap-1" aria-label="Agent is deciding whether to call a tool">
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#6d8b7f] [animation-delay:-0.3s]" />
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#6d8b7f] [animation-delay:-0.15s]" />
-                          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#6d8b7f]" />
-                        </span>
-                        <span className="text-xs font-medium">Deciding whether a tool is needed…</span>
+              <div className="chat-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                <div className="mx-auto flex min-h-full w-full max-w-[850px] flex-col px-4 py-7 sm:px-8 sm:py-10">
+                  {messages.length === 0 ? (
+                    <div className="my-auto py-4 sm:py-8">
+                      <div className="max-w-2xl">
+                        <p className="flex items-center gap-2 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#587165]">
+                          <span className="h-px w-6 bg-[#759084]" />
+                          Ask your donation ledger
+                        </p>
+                        <h2 className="mt-5 max-w-[660px] text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.055em] text-[#19362d] sm:text-[3.45rem]">
+                          Fundraising answers,
+                          <span className="block text-[#779166]">without the digging.</span>
+                        </h2>
+                        <p className="mt-5 max-w-xl text-[0.88rem] leading-6 text-[#718079] sm:text-[0.94rem]">
+                          Ask in plain English. The agent will call your backend when it needs exact figures, then turn the response into a clear answer.
+                        </p>
                       </div>
+
+                      <div className="mt-9 grid gap-2.5 sm:grid-cols-3">
+                        {suggestions.map((suggestion, index) => (
+                          <button
+                            className="group flex min-h-[7.25rem] flex-col justify-between rounded-[1.05rem] border border-[#dfe2dc] bg-white p-4 text-left shadow-[0_5px_20px_rgba(32,52,45,0.045)] transition hover:-translate-y-0.5 hover:border-[#bac8bc] hover:shadow-[0_10px_28px_rgba(32,52,45,0.09)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f50] disabled:pointer-events-none disabled:opacity-50"
+                            disabled={isBusy}
+                            key={suggestion.label}
+                            onClick={() => submitMessage(suggestion.prompt)}
+                            type="button"
+                          >
+                            <div className="flex w-full items-center justify-between">
+                              <span className="text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[#8a958f]">0{index + 1}</span>
+                              <span className="grid h-6 w-6 place-items-center rounded-full bg-[#f0f2ed] text-[#557064] transition group-hover:bg-[#dfff62] group-hover:text-[#173c32]">
+                                <span className="h-3 w-3"><ArrowIcon /></span>
+                              </span>
+                            </div>
+                            <span className="mt-4 text-[0.76rem] font-medium leading-5 text-[#354840]">{suggestion.prompt}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-8">
+                      {messages.map((message) => {
+                        const isUser = message.role === "user";
+                        return (
+                          <article className={`flex gap-3.5 ${isUser ? "justify-end" : "justify-start"}`} key={message.id}>
+                            {!isUser && (
+                              <div className="mt-0.5"><BrandMark small /></div>
+                            )}
+                            <div className={isUser ? "max-w-[85%] rounded-[1.15rem] rounded-br-[0.35rem] bg-[#173c32] px-4 py-3 text-[0.88rem] leading-6 text-white shadow-sm sm:max-w-[72%]" : "min-w-0 max-w-[92%] flex-1 sm:max-w-[86%]"}>
+                              {!isUser && (
+                                <div className="mb-2 flex items-center gap-2 text-[0.64rem] font-bold uppercase tracking-[0.11em] text-[#73837b]">
+                                  Giving Assistant
+                                </div>
+                              )}
+                              {message.parts.map((part, partIndex) => {
+                                if (part.type === "text") {
+                                  if (!part.text) return null;
+                                  return isUser ? (
+                                    <p className="whitespace-pre-wrap break-words" key={partIndex}>{part.text}</p>
+                                  ) : (
+                                    <div className="break-words text-[0.9rem] leading-7 text-[#35443e]" key={partIndex}>
+                                      <MarkdownMessage>{part.text}</MarkdownMessage>
+                                    </div>
+                                  );
+                                }
+
+                                if (isDynamicToolUIPart(part)) {
+                                  return <DonationToolCard key={part.toolCallId} part={part} />;
+                                }
+
+                                return null;
+                              })}
+                            </div>
+                          </article>
+                        );
+                      })}
+                      <div ref={bottomRef} />
                     </div>
                   )}
                 </div>
-              )}
+              </div>
 
-              {error && (
-                <div className="mt-7 flex items-start justify-between gap-4 rounded-2xl border border-[#efcfc6] bg-[#fff6f2] px-4 py-3 text-sm text-[#884c3e]" role="alert">
-                  <div>
-                    <p className="font-semibold">The agent could not finish that request.</p>
-                    <p className="mt-1 text-xs leading-5 text-[#a26859]">Make sure the NestJS API is running and OPENAI_API_KEY is configured.</p>
+              <div className="shrink-0 border-t border-[#e8e9e4] bg-[#f7f7f2]/95 px-4 pb-3 pt-3 backdrop-blur sm:px-6 sm:pb-5 lg:px-8">
+                <form className="mx-auto w-full max-w-[850px]" onSubmit={handleSubmit}>
+                  <div className="flex items-end gap-2 rounded-[1.2rem] border border-[#d6dad4] bg-white p-2 shadow-[0_8px_28px_rgba(32,49,43,0.07)] transition focus-within:border-[#7e9a8e] focus-within:ring-4 focus-within:ring-[#dfe8df]/70">
+                    <label className="sr-only" htmlFor="chat-input">Ask about donation data</label>
+                    <textarea
+                      autoFocus
+                      className="max-h-[132px] min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-[0.9rem] leading-6 text-[#263730] outline-none placeholder:text-[#9aa29e]"
+                      id="chat-input"
+                      onChange={(event) => setInput(event.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Ask about totals, campaigns, or giving trends…"
+                      ref={inputRef}
+                      rows={1}
+                      value={input}
+                    />
+                    {isBusy ? (
+                      <button aria-label="Stop generating" className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] bg-[#edf0ec] text-[#36544a] transition hover:bg-[#e2e7e2]" onClick={stop} type="button">
+                        <span className="h-4 w-4"><StopIcon /></span>
+                      </button>
+                    ) : (
+                      <button aria-label="Send message" className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] bg-[#173c32] text-white shadow-sm transition hover:bg-[#225344] disabled:cursor-not-allowed disabled:bg-[#d9ddd8]" disabled={!input.trim()} type="submit">
+                        <span className="h-4.5 w-4.5"><ArrowIcon /></span>
+                      </button>
+                    )}
                   </div>
-                  <button className="shrink-0 rounded-lg border border-[#e7c4ba] px-2.5 py-1 text-xs font-semibold transition hover:bg-[#f9e8e2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9c604e]" onClick={() => void regenerate()} type="button">Retry</button>
-                </div>
-              )}
-              <div ref={bottomRef} />
+                </form>
+              </div>
             </div>
-          </div>
-
-          <div className="shrink-0 border-t border-[#e8e9e4] bg-[#f7f7f2]/95 px-4 pb-3 pt-3 backdrop-blur sm:px-6 sm:pb-5 lg:px-8">
-            <form className="mx-auto w-full max-w-[850px]" onSubmit={handleSubmit}>
-              <div className="flex items-end gap-2 rounded-[1.2rem] border border-[#d6dad4] bg-white p-2 shadow-[0_8px_28px_rgba(32,49,43,0.07)] transition focus-within:border-[#7e9a8e] focus-within:ring-4 focus-within:ring-[#dfe8df]/70">
-                <label className="sr-only" htmlFor="chat-input">Ask about donation data</label>
-                <textarea
-                  autoFocus
-                  className="max-h-[132px] min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-[0.9rem] leading-6 text-[#263730] outline-none placeholder:text-[#9aa29e]"
-                  id="chat-input"
-                  onChange={(event) => setInput(event.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask about totals, campaigns, or giving trends…"
-                  ref={inputRef}
-                  rows={1}
-                  value={input}
-                />
-                {isBusy ? (
-                  <button aria-label="Stop generating" className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] bg-[#edf0ec] text-[#36544a] transition hover:bg-[#e2e7e2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f50]" onClick={stop} type="button"><span className="h-4 w-4"><StopIcon /></span></button>
-                ) : (
-                  <button aria-label="Send message" className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] bg-[#173c32] text-white shadow-sm transition hover:bg-[#225344] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315f50] disabled:cursor-not-allowed disabled:bg-[#d9ddd8]" disabled={!input.trim()} type="submit"><span className="h-4.5 w-4.5"><ArrowIcon /></span></button>
-                )}
-              </div>
-              <div className="mt-2.5 flex items-center justify-between px-1 text-[0.62rem] text-[#969e9a]">
-                <span>Enter to send · Shift + Enter for a new line</span>
-                <span className="hidden items-center gap-1.5 sm:flex"><span aria-hidden="true">●</span> API key stays server-side</span>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-    </main>
+          </section>
+        </main>
+      )}
+    </div>
   );
 }
